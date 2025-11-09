@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>0001.ooo</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ॐ</title>
+
 <style>
   body {
     height: 100vh;
@@ -14,19 +15,48 @@
     align-items: center;
     flex-direction: column;
     overflow: hidden;
+    font-family: 'Helvetica Neue', sans-serif;
+    color: #dce7f7;
   }
 
-  /* Breathing circle */
+  /* Default Breathing Circle */
   .circle {
     width: 180px;
     height: 180px;
     border-radius: 50%;
-    background: radial-gradient(circle, #70d6ff, #0077b6);
+    background: radial-gradient(circle, #70d6ff 20%, #0077b6 80%);
     box-shadow: 0 0 60px #70d6ff90;
-    transition: transform 4s ease;
+    transition: transform 4s ease, background 3s ease, box-shadow 3s ease;
   }
 
-  /* Button wrapper */
+  /* Mahadev glowing transformation */
+  .circle.mahadev {
+    background: radial-gradient(circle at 30% 30%, #ffffff 25%, #eaf7ff 60%, #b3dbff 90%);
+    box-shadow:
+      0 0 80px rgba(255, 255, 255, 0.8),
+      0 0 160px rgba(180, 220, 255, 0.6),
+      0 0 300px rgba(100, 180, 255, 0.4);
+  }
+
+  /* Breathing phase text */
+  .phase-text {
+    position: absolute;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 300;
+    letter-spacing: 1.2px;
+    opacity: 0;
+    transition: opacity 2s ease, color 2s ease;
+    color: rgba(220, 235, 255, 0.85);
+    user-select: none;
+    pointer-events: none;
+  }
+
+  /* Wrapper for button and hint */
   .button-wrapper {
     position: absolute;
     bottom: 12%;
@@ -39,18 +69,18 @@
     align-items: center;
   }
 
-  /* Hint shadow circle that always stays */
+  /* Subtle gray hint circle always remains */
   .hint-circle {
     position: absolute;
     width: 90px;
     height: 90px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(180,180,190,0.03) 20%, rgba(11,21,34,0.9) 80%);
-    opacity: 0.15;
+    background: radial-gradient(circle, rgba(180,180,190,0.04) 25%, rgba(11,21,34,0.95) 80%);
+    opacity: 0.12;
     transition: opacity 0.6s ease;
   }
 
-  /* Base invisible button */
+  /* Button base */
   #btnPlayPause {
     width: 85px;
     height: 85px;
@@ -60,26 +90,20 @@
     position: relative;
     cursor: pointer;
     opacity: 1;
+    box-shadow: 0 0 20px rgba(0,0,0,0.3);
     transition: opacity 1.2s ease, transform 0.3s ease, box-shadow 0.6s ease, background 1s ease;
-    box-shadow: 0 0 30px rgba(0,0,0,0.2);
   }
 
-  /* Hidden mode after fade-out */
-  .hidden {
-    opacity: 0;
-    pointer-events: none;
-  }
+  .hidden { opacity: 0; pointer-events: none; }
 
-  /* CSS SHAPES — create pause or play purely with pseudo elements */
   #btnPlayPause::before,
   #btnPlayPause::after {
     content: "";
     position: absolute;
-    background: linear-gradient(to bottom, rgba(200,210,230,0.2), rgba(255,255,255,0.03));
+    background: linear-gradient(to bottom, rgba(190,200,210,0.2), rgba(255,255,255,0.03));
     transition: all 0.8s ease;
   }
 
-  /* Pause state (two slim bars) */
   #btnPlayPause.pause::before,
   #btnPlayPause.pause::after {
     width: 6px;
@@ -88,33 +112,27 @@
     transform: translateY(-50%);
     border-radius: 1px;
   }
-
   #btnPlayPause.pause::before { left: 36%; }
   #btnPlayPause.pause::after  { right: 36%; }
 
-  /* Play state (triangle) */
   #btnPlayPause.play::before {
     left: 40%;
     top: 50%;
     width: 0;
     height: 0;
     transform: translateY(-50%);
-    border-left: 16px solid rgba(200,210,230,0.2);
+    border-left: 16px solid rgba(200,210,230,0.25);
     border-top: 10px solid transparent;
     border-bottom: 10px solid transparent;
   }
 
-  /* Remove second bar when in play mode */
   #btnPlayPause.play::after { display: none; }
 
-  /* Hover glow reveal */
-  .button-wrapper:hover .hint-circle {
-    opacity: 0;
-  }
+  .button-wrapper:hover .hint-circle { opacity: 0; }
 
   .button-wrapper:hover #btnPlayPause {
     background: radial-gradient(circle, #111820 30%, #000a12 100%);
-    box-shadow: 0 0 40px rgba(112,214,255,0.3);
+    box-shadow: 0 0 35px rgba(112,214,255,0.3);
     opacity: 1;
     transform: scale(1.05);
   }
@@ -126,12 +144,14 @@
   }
 </style>
 </head>
+
 <body>
   <main class="container">
-    <div class="circle"></div>
+    <div class="phase-text" id="phaseText">Breathe In</div>
+    <div class="circle" id="circle"></div>
 
-    <audio id="bgAudio" loop autoplay>
-      <source src="audio/0111.mp3" type="audio/mpeg">
+    <audio id="bgAudio" preload="auto" loop autoplay muted>
+      <source src="audio/0111.mp3" type="audio/mpeg" />
       Your browser does not support the audio element.
     </audio>
 
@@ -142,25 +162,66 @@
   </main>
 
   <script>
-    // Breathing animation
-    const c = document.querySelector('.circle');
+    const circle = document.getElementById('circle');
+    const text = document.getElementById('phaseText');
+
     async function cycle() {
+      // Pre-start
+      text.textContent = "Breathe out, keep the lungs empty";
+      text.style.opacity = 1;
+      circle.style.transform = 'scale(0.1)';
+      await new Promise(r => setTimeout(r, 7000));
+
+      text.textContent = "Follow Instructions, here we start! Mahadev!";
+      await new Promise(r => setTimeout(r, 3000));
+
       while (true) {
-        c.style.transform = 'scale(2.1)';
-        await new Promise(r => setTimeout(r, 40000));
-        await new Promise(r => setTimeout(r, 2000));
-        c.style.transform = 'scale(0.7)';
-        await new Promise(r => setTimeout(r, 40000));
-        await new Promise(r => setTimeout(r, 2000));
+        // Inhale
+        text.textContent = "0111 : Inhale";
+        text.style.opacity = 1;
+        circle.classList.remove('mahadev');
+        circle.style.transform = 'scale(2.1)';
+        await new Promise(r => setTimeout(r, 10000));
+
+        // Hold after inhale
+        text.textContent = "0011 : Hold after inhale";
+        await new Promise(r => setTimeout(r, 30000));
+
+        // Mahadev phase
+        text.textContent = "0010 : Mahadev";
+        circle.classList.add('mahadev');
+        await new Promise(r => setTimeout(r, 3000));
+
+        // Exhale
+        text.textContent = "0001 : Exhale";
+        circle.classList.remove('mahadev');
+        circle.style.transform = 'scale(0.7)';
+        await new Promise(r => setTimeout(r, 3000));
+
+        // Hold after exhale
+        text.textContent = "0000 : Hold after exhale";
+        await new Promise(r => setTimeout(r, 9000));
       }
     }
     cycle();
 
-    // Audio toggle + visual state
+    /* Audio setup */
     const audio = document.getElementById('bgAudio');
     const btn = document.getElementById('btnPlayPause');
 
-    btn.addEventListener('click', () => {
+    window.addEventListener('click', () => {
+      audio.muted = false;
+      audio.volume = 0;
+      audio.play();
+      let v = 0;
+      const fade = setInterval(() => {
+        if (v < 1) { v += 0.02; audio.volume = v; }
+        else clearInterval(fade);
+      }, 100);
+    }, { once: true });
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
       if (audio.paused) {
         audio.play();
         btn.classList.remove('play');
@@ -172,10 +233,7 @@
       }
     });
 
-    // Fade button after 3 seconds (leave only the faint hint circle)
-    setTimeout(() => {
-      btn.classList.add('hidden');
-    }, 3000);
+    setTimeout(() => { btn.classList.add('hidden'); }, 3000);
   </script>
 </body>
 </html>
