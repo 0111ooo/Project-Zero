@@ -8,12 +8,26 @@
 </head>
 <body>
   <main class="container">
-    <section class="block up">Up</section>
-    <section class="block down">Down</section>
-    <section class="block front">Front</section>
-    <section class="block back">Back</section>
-    <section class="block left">Left</section>
-    <section class="block right">Right</section>
+
+    <div class="circle"></div>
+      <script>
+      const c=document.querySelector('.circle');
+      async function cycle(){
+        while(true){
+          c.style.transform='scale(1.3)';
+          await new Promise(r=>setTimeout(r,4000)); // inhale
+          await new Promise(r=>setTimeout(r,2000)); // hold
+          c.style.transform='scale(1)';
+          await new Promise(r=>setTimeout(r,4000)); // exhale
+          await new Promise(r=>setTimeout(r,2000)); // hold
+        }
+      }
+      cycle();
+      </script>
+      <style>
+      body{display:flex;justify-content:center;align-items:center;height:100vh;background:#0b1522;}
+      .circle{width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,#70d6ff,#0077b6);transition:transform 4s ease;}
+      </style>
   </main>
 </body>
 </html>
